@@ -1,0 +1,83 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
+    <preference for="Orangecat\MagoAiImage\Api\ProviderPoolInterface" type="Orangecat\MagoAiImage\Model\ProviderPool"/>
+    <preference for="Orangecat\MagoAiImage\Api\ProviderConfigInterface" type="Orangecat\MagoAiImage\Model\ProviderConfig"/>
+    <preference for="Orangecat\MagoAiImage\Api\ImageGeneratorInterface" type="Orangecat\MagoAiImage\Model\ImageGenerator"/>
+    <preference for="Orangecat\MagoAiImage\Api\GenerationManagementInterface" type="Orangecat\MagoAiImage\Model\GenerationManagement"/>
+    <preference for="Orangecat\MagoAiImage\Api\GenerationRepositoryInterface" type="Orangecat\MagoAiImage\Model\GenerationRepository"/>
+    <preference for="Orangecat\MagoAiImage\Api\Data\GenerationInterface" type="Orangecat\MagoAiImage\Model\Generation"/>
+    <preference for="Orangecat\MagoAiImage\Api\Data\GenerationSearchResultsInterface" type="Orangecat\MagoAiImage\Model\GenerationSearchResults"/>
+    <preference for="Orangecat\MagoAiImage\Api\Data\ImageBinaryInterface" type="Orangecat\MagoAiImage\Model\Data\ImageBinary"/>
+    <preference for="Orangecat\MagoAiImage\Api\Data\ImageRequestInterface" type="Orangecat\MagoAiImage\Model\Data\ImageRequest"/>
+    <preference for="Orangecat\MagoAiImage\Api\Data\ImageResultInterface" type="Orangecat\MagoAiImage\Model\Data\ImageResult"/>
+    <preference for="Orangecat\MagoAiImage\Api\Data\ProviderCapabilitiesInterface" type="Orangecat\MagoAiImage\Model\Data\ProviderCapabilities"/>
+
+    <!--
+        Image providers. Another module can add its own here; a provider with its own API key must
+        also mark mago_ai_image/<code>/api_key as sensitive in Magento\Config\Model\Config\TypePool.
+    -->
+    <type name="Orangecat\MagoAiImage\Model\ProviderPool">
+        <arguments>
+            <argument name="providers" xsi:type="array">
+                <item name="dummy" xsi:type="object">Orangecat\MagoAiImage\Model\Provider\Dummy</item>
+                <item name="gemini" xsi:type="object">Orangecat\MagoAiImage\Model\Provider\Gemini</item>
+                <item name="openai" xsi:type="object">Orangecat\MagoAiImage\Model\Provider\OpenAi</item>
+            </argument>
+        </arguments>
+    </type>
+
+    <virtualType name="Orangecat\MagoAiImage\Model\Config\Source\GoogleAiBaseService"
+                 type="Orangecat\MagoAiImage\Model\Config\Source\AiBaseService">
+        <arguments>
+            <argument name="codes" xsi:type="array">
+                <item name="google" xsi:type="string">google</item>
+            </argument>
+        </arguments>
+    </virtualType>
+
+    <!-- Only real OpenAI rows: an "OpenAI compatible" row (e.g. Kimi) has no image API. -->
+    <virtualType name="Orangecat\MagoAiImage\Model\Config\Source\OpenAiAiBaseService"
+                 type="Orangecat\MagoAiImage\Model\Config\Source\AiBaseService">
+        <arguments>
+            <argument name="codes" xsi:type="array">
+                <item name="openai" xsi:type="string">openai</item>
+            </argument>
+        </arguments>
+    </virtualType>
+
+    <!-- Keep the keys out of app:config:dump, like the MageOS_AiBase credentials. -->
+    <type name="Magento\Config\Model\Config\TypePool">
+        <arguments>
+            <argument name="sensitive" xsi:type="array">
+                <item name="mago_ai_image/gemini/api_key" xsi:type="string">1</item>
+                <item name="mago_ai_image/openai/api_key" xsi:type="string">1</item>
+            </argument>
+        </arguments>
+    </type>
+
+    <type name="Magento\Framework\Console\CommandList">
+        <arguments>
+            <argument name="commands" xsi:type="array">
+                <item name="mago_ai_image_providers" xsi:type="object">Orangecat\MagoAiImage\Console\Command\ProvidersCommand\Proxy</item>
+                <item name="mago_ai_image_generate" xsi:type="object">Orangecat\MagoAiImage\Console\Command\GenerateCommand\Proxy</item>
+            </argument>
+        </arguments>
+    </type>
+
+    <!-- Mago Assistant tools -->
+    <type name="MagoAssistant\Mago\Service\Tool\ToolRegistry">
+        <arguments>
+            <argument name="tools" xsi:type="array">
+                <item name="mago_product_image_list" xsi:type="object">Orangecat\MagoAiImage\Service\Tool\ListImages</item>
+                <item name="mago_product_image_generate" xsi:type="object">Orangecat\MagoAiImage\Service\Tool\GenerateImage</item>
+                <item name="mago_product_image_attach" xsi:type="object">Orangecat\MagoAiImage\Service\Tool\AttachImage</item>
+            </argument>
+        </arguments>
+    </type>
+    <type name="Orangecat\MagoAiImage\Service\Tool\AttachImage">
+        <arguments>
+            <argument name="backendUrl" xsi:type="object">Magento\Backend\Model\UrlInterface\Proxy</argument>
+        </arguments>
+    </type>
+</config>

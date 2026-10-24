@@ -1,0 +1,29 @@
+{
+    "mago_ai_image_generation": {
+        "column": {
+            "generation_id": true,
+            "product_id": true,
+            "source_file": true,
+            "provider": true,
+            "model": true,
+            "prompt": true,
+            "revised_prompt": true,
+            "file": true,
+            "status": true,
+            "media_gallery_entry_id": true,
+            "admin_user_id": true,
+            "usage": true,
+            "created_at": true,
+            "updated_at": true
+        },
+        "index": {
+            "MAGO_AI_IMAGE_GENERATION_PRODUCT_ID": true,
+            "MAGO_AI_IMAGE_GENERATION_STATUS_CREATED_AT": true
+        },
+        "constraint": {
+            "PRIMARY": true,
+            "MAGO_AI_IMAGE_GENERATION_PRD_ID_CAT_PRD_ENTT_ENTT_ID": true,
+            "MAGO_AI_IMAGE_GENERATION_ADMIN_USER_ID_ADMIN_USER_USER_ID": true
+        }
+    }
+}

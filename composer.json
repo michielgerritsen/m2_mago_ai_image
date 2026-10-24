@@ -1,0 +1,32 @@
+{
+    "name": "orangecat/module-mago-ai-image",
+    "description": "Mago Assistant add-on: AI product images from a gallery image and a prompt, with pluggable providers (Google Gemini, OpenAI).",
+    "type": "magento2-module",
+    "license": "MIT",
+    "require": {
+        "php": "~8.2.0||~8.3.0||~8.4.0||~8.5.0",
+        "ext-gd": "*",
+        "mage-os/framework": "*",
+        "mage-os/module-authorization": "*",
+        "mage-os/module-backend": "*",
+        "mage-os/module-catalog": "*",
+        "mage-os/module-config": "*",
+        "mage-os/module-media-storage": "*",
+        "mage-os/module-store": "*",
+        "mage-os/module-user": "*",
+        "mage-os/module-ai-base": "*",
+        "mago-assistant/magento2-mago": "^1.1",
+        "symfony/ai-gemini-platform": "^0.14",
+        "symfony/ai-open-ai-platform": "^0.14",
+        "symfony/ai-platform": "^0.14",
+        "symfony/http-client": "^7.3||^8.0"
+    },
+    "autoload": {
+        "files": [
+            "registration.php"
+        ],
+        "psr-4": {
+            "Orangecat\\MagoAiImage\\": ""
+        }
+    }
+}

@@ -1,0 +1,36 @@
+<?xml version="1.0"?>
+<schema xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:framework:Setup/Declaration/Schema/etc/schema.xsd">
+    <table name="mago_ai_image_generation" resource="default" engine="innodb" comment="AI generated product images">
+        <column xsi:type="int" name="generation_id" unsigned="true" nullable="false" identity="true" comment="Generation ID"/>
+        <column xsi:type="int" name="product_id" unsigned="true" nullable="false" identity="false" comment="Product ID"/>
+        <column xsi:type="varchar" name="source_file" nullable="true" length="255" comment="Reference gallery file"/>
+        <column xsi:type="varchar" name="provider" nullable="false" length="32" comment="Provider code"/>
+        <column xsi:type="varchar" name="model" nullable="false" length="128" comment="Model"/>
+        <column xsi:type="text" name="prompt" nullable="false" comment="Prompt"/>
+        <column xsi:type="text" name="revised_prompt" nullable="true" comment="Prompt revised by the provider"/>
+        <column xsi:type="varchar" name="file" nullable="false" length="255" comment="Preview file relative to pub/media"/>
+        <column xsi:type="varchar" name="status" nullable="false" length="16" default="preview" comment="preview, attached, discarded"/>
+        <column xsi:type="int" name="media_gallery_entry_id" unsigned="true" nullable="true" identity="false" comment="Gallery value ID once attached"/>
+        <column xsi:type="int" name="admin_user_id" unsigned="true" nullable="true" identity="false" comment="Requesting admin user"/>
+        <column xsi:type="text" name="usage" nullable="true" comment="Provider usage metadata (JSON)"/>
+        <column xsi:type="timestamp" name="created_at" on_update="false" nullable="false" default="CURRENT_TIMESTAMP" comment="Created At"/>
+        <column xsi:type="timestamp" name="updated_at" on_update="true" nullable="false" default="CURRENT_TIMESTAMP" comment="Updated At"/>
+        <constraint xsi:type="primary" referenceId="PRIMARY">
+            <column name="generation_id"/>
+        </constraint>
+        <constraint xsi:type="foreign" referenceId="MAGO_AI_IMAGE_GENERATION_PRD_ID_CAT_PRD_ENTT_ENTT_ID"
+                    table="mago_ai_image_generation" column="product_id"
+                    referenceTable="catalog_product_entity" referenceColumn="entity_id" onDelete="CASCADE"/>
+        <constraint xsi:type="foreign" referenceId="MAGO_AI_IMAGE_GENERATION_ADMIN_USER_ID_ADMIN_USER_USER_ID"
+                    table="mago_ai_image_generation" column="admin_user_id"
+                    referenceTable="admin_user" referenceColumn="user_id" onDelete="SET NULL"/>
+        <index referenceId="MAGO_AI_IMAGE_GENERATION_PRODUCT_ID" indexType="btree">
+            <column name="product_id"/>
+        </index>
+        <index referenceId="MAGO_AI_IMAGE_GENERATION_STATUS_CREATED_AT" indexType="btree">
+            <column name="status"/>
+            <column name="created_at"/>
+        </index>
+    </table>
+</schema>

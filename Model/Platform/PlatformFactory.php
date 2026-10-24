@@ -1,0 +1,75 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Orangecat\MagoAiImage\Model\Platform;
+
+use Symfony\AI\Platform\Bridge\Gemini\Factory as GeminiFactory;
+use Symfony\AI\Platform\Bridge\OpenAi\Factory as OpenAiFactory;
+use Symfony\AI\Platform\PlatformInterface;
+use Symfony\Component\HttpClient\HttpClient;
+use Symfony\Contracts\HttpClient\HttpClientInterface;
+
+/**
+ * Symfony AI platforms for the image providers, one per request (the key and timeout can differ
+ * per store).
+ */
+class PlatformFactory
+{
+    public const GEMINI_BASE_URL = 'https://generativelanguage.googleapis.com';
+
+    /**
+     * @param HttpClientInterface|null $httpClient Replaces the default client, e.g. in tests
+     */
+    public function __construct(
+        private readonly ?HttpClientInterface $httpClient = null
+    ) {
+    }
+
+    /**
+     * Platform for the Gemini API.
+     *
+     * @param string $apiKey
+     * @param string $baseUrl Without the API version: the bridge appends /v1beta
+     * @param int $timeout Seconds
+     * @return PlatformInterface
+     */
+    public function createGemini(string $apiKey, string $baseUrl, int $timeout): PlatformInterface
+    {
+        return GeminiFactory::createPlatform(
+            $apiKey,
+            $this->createHttpClient($timeout),
+            baseUrl: preg_replace('#/v1(beta)?/?$#', '', rtrim($baseUrl, '/')) ?: self::GEMINI_BASE_URL
+        );
+    }
+
+    /**
+     * Platform for the OpenAI API.
+     *
+     * @param string $apiKey
+     * @param int $timeout Seconds
+     * @return PlatformInterface
+     */
+    public function createOpenAi(string $apiKey, int $timeout): PlatformInterface
+    {
+        return OpenAiFactory::createPlatform($apiKey, $this->createHttpClient($timeout));
+    }
+
+    /**
+     * HTTP client with the configured timeout and no redirects.
+     *
+     * A provider API answers a request, it never redirects it, and a redirect could carry the key
+     * to another host.
+     *
+     * @param int $timeout Seconds
+     * @return HttpClientInterface
+     */
+    private function createHttpClient(int $timeout): HttpClientInterface
+    {
+        $options = ['timeout' => $timeout, 'max_duration' => $timeout, 'max_redirects' => 0];
+
+        return $this->httpClient !== null
+            ? $this->httpClient->withOptions($options)
+            : HttpClient::create($options);
+    }
+}
