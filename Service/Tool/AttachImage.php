@@ -14,6 +14,7 @@ use Orangecat\MagoAiImage\Api\Data\GenerationInterface;
 use Orangecat\MagoAiImage\Api\GenerationManagementInterface;
 use Orangecat\MagoAiImage\Api\GenerationRepositoryInterface;
 use Orangecat\MagoAiImage\Model\Availability;
+use Orangecat\MagoAiImage\Model\ProductAccess;
 use MagoAssistant\Mago\Api\Tool\AvailabilityAwareToolInterface;
 use MagoAssistant\Mago\Api\Tool\PresentableToolInterface;
 use MagoAssistant\Mago\Api\Tool\ValidatingToolInterface;
@@ -34,6 +35,7 @@ class AttachImage implements AvailabilityAwareToolInterface, PresentableToolInte
      * @param MediaConfig $mediaConfig
      * @param BackendUrl $backendUrl
      * @param Availability $availability
+     * @param ProductAccess $productAccess
      */
     public function __construct(
         private readonly GenerationManagementInterface $generationManagement,
@@ -42,7 +44,8 @@ class AttachImage implements AvailabilityAwareToolInterface, PresentableToolInte
         private readonly ProductAttributeMediaGalleryManagementInterface $galleryManagement,
         private readonly MediaConfig $mediaConfig,
         private readonly BackendUrl $backendUrl,
-        private readonly Availability $availability
+        private readonly Availability $availability,
+        private readonly ProductAccess $productAccess
     ) {
     }
 
@@ -149,6 +152,10 @@ class AttachImage implements AvailabilityAwareToolInterface, PresentableToolInte
      */
     public function findRefusal(array $input): ?array
     {
+        $denied = $this->productAccess->getDeniedReason();
+        if ($denied !== null) {
+            return ['error' => $denied];
+        }
         $generationId = (int) ($input['generation_id'] ?? 0);
         try {
             $generation = $this->generationRepository->getById($generationId);
@@ -211,6 +218,10 @@ class AttachImage implements AvailabilityAwareToolInterface, PresentableToolInte
      */
     public function execute(array $params): array
     {
+        $denied = $this->productAccess->getDeniedReason();
+        if ($denied !== null) {
+            return ['error' => $denied];
+        }
         $roles = array_values(array_map('strval', (array) ($params['roles'] ?? [])));
         $label = isset($params['label']) ? (string) $params['label'] : null;
 

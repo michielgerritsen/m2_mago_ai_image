@@ -78,8 +78,8 @@ Errors are mapped to `ProviderUnavailableException` (key, access, unknown model)
 | `mago_product_image_attach` | write | `Orangecat_MagoAiImage::attach` | Adds a preview to the product gallery, with roles and label |
 
 The tools are hidden while generation is disabled or the default provider has no credentials. A
-call that cannot succeed (unknown SKU, empty prompt, preview already attached, unknown role) is
-refused before the confirmation card. Previews are served from this store's media URL, so the
+call that cannot succeed (no product permission, unknown SKU, empty prompt, preview already attached,
+unknown role) is refused before the confirmation card. Previews are served from this store's media URL, so the
 chat panel shows them inline (it only loads images from its own origin).
 
 Example questions:
@@ -111,8 +111,9 @@ ones are discarded, attached ones only lose the preview file (the gallery keeps 
 `file` is set to empty). Until then the Mago chat history keeps showing them. Generations are
 kept in `mago_ai_image_generation`, with the admin who requested them.
 
-ACL: `Orangecat_MagoAiImage::generate`, `Orangecat_MagoAiImage::attach` (under Catalog) and
-`Orangecat_MagoAiImage::config`.
+ACL: `Orangecat_MagoAiImage::generate`, `Orangecat_MagoAiImage::attach` (under Catalog > Inventory >
+Products) and `Orangecat_MagoAiImage::config`. The generate and attach tools also require
+`Magento_Catalog::products` at run time, so a role cannot change galleries of products it cannot edit.
 
 ## Adding a provider from another module
 

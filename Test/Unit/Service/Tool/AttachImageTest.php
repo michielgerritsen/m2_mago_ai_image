@@ -10,12 +10,14 @@ use Magento\Catalog\Api\Data\ProductInterface;
 use Magento\Catalog\Api\ProductAttributeMediaGalleryManagementInterface;
 use Magento\Catalog\Api\ProductRepositoryInterface;
 use Magento\Catalog\Model\Product\Media\Config as MediaConfig;
+use Magento\Framework\AuthorizationInterface;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Orangecat\MagoAiImage\Api\Data\GenerationInterface;
 use Orangecat\MagoAiImage\Api\GenerationManagementInterface;
 use Orangecat\MagoAiImage\Api\GenerationRepositoryInterface;
 use Orangecat\MagoAiImage\Model\Availability;
+use Orangecat\MagoAiImage\Model\ProductAccess;
 use Orangecat\MagoAiImage\Service\Tool\AttachImage;
 use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -49,6 +51,13 @@ class AttachImageTest extends TestCase
      */
     private AttachImage $tool;
 
+    /**
+     * Whether the admin may manage products.
+     *
+     * @var bool
+     */
+    private bool $canManageProducts = true;
+
     protected function setUp(): void
     {
         $this->generationManagement = $this->createMock(GenerationManagementInterface::class);
@@ -70,7 +79,23 @@ class AttachImageTest extends TestCase
             $this->galleryManagement,
             $mediaConfig,
             $backendUrl,
-            $this->createMock(Availability::class)
+            $this->createMock(Availability::class),
+            new ProductAccess($this->authorization())
+        );
+    }
+
+    public function testRefusesAdminWhoCannotManageProducts(): void
+    {
+        $this->canManageProducts = false;
+        $this->generationManagement->expects($this->never())->method('attach');
+
+        $this->assertSame(
+            ['error' => 'You are not allowed to manage products.'],
+            $this->tool->findRefusal(['generation_id' => 8])
+        );
+        $this->assertSame(
+            ['error' => 'You are not allowed to manage products.'],
+            $this->tool->execute(['generation_id' => 8])
         );
     }
 
@@ -174,5 +199,20 @@ class AttachImageTest extends TestCase
         $generation->method('getStatus')->willReturn($status);
 
         return $generation;
+    }
+
+    /**
+     * Authorization that follows $canManageProducts.
+     *
+     * @return AuthorizationInterface
+     */
+    private function authorization(): AuthorizationInterface
+    {
+        $authorization = $this->createStub(AuthorizationInterface::class);
+        $authorization->method('isAllowed')->willReturnCallback(
+            fn (string $resource): bool => $resource !== ProductAccess::ACL_PRODUCTS || $this->canManageProducts
+        );
+
+        return $authorization;
     }
 }

@@ -20,6 +20,12 @@ class ImageInspector
     ];
 
     /**
+     * Largest side accepted, in pixels. Providers return up to 4K; anything far larger could exhaust
+     * memory when Magento resizes it for the catalog.
+     */
+    public const MAX_DIMENSION = 8192;
+
+    /**
      * @param ImageBinaryInterfaceFactory $imageBinaryFactory
      */
     public function __construct(
@@ -44,12 +50,24 @@ class ImageInspector
         if ($info === false || !isset(self::EXTENSIONS[$info['mime']])) {
             throw new LocalizedException(__('The image is not a JPEG, PNG or WebP file.'));
         }
+        $width = (int) $info[0];
+        $height = (int) $info[1];
+        if ($width < 1 || $height < 1 || $width > self::MAX_DIMENSION || $height > self::MAX_DIMENSION) {
+            throw new LocalizedException(
+                __(
+                    'The image is %1x%2 pixels; each side must be between 1 and %3 pixels.',
+                    $width,
+                    $height,
+                    self::MAX_DIMENSION
+                )
+            );
+        }
 
         return $this->imageBinaryFactory->create([
             'content' => $content,
             'mimeType' => $info['mime'],
-            'width' => (int) $info[0],
-            'height' => (int) $info[1],
+            'width' => $width,
+            'height' => $height,
         ]);
     }
 

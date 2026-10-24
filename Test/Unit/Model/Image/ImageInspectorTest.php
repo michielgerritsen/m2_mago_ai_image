@@ -53,6 +53,17 @@ class ImageInspectorTest extends TestCase
         $this->inspector->inspect($gif);
     }
 
+    public function testRejectsOversizedImageFromHeader(): void
+    {
+        // Only the header is read: a PNG signature and an IHDR chunk claiming 9000x10 pixels.
+        $header = "\x89PNG\r\n\x1a\n" . pack('N', 13) . 'IHDR' . pack('NN', 9000, 10) . "\x08\x02\x00\x00\x00"
+            . pack('N', 0);
+
+        $this->expectException(LocalizedException::class);
+        $this->expectExceptionMessage('9000x10');
+        $this->inspector->inspect($header);
+    }
+
     public static function png(int $width, int $height): string
     {
         $gd = imagecreatetruecolor($width, $height);

@@ -89,6 +89,7 @@
 "The generated image file is missing.","The generated image file is missing."
 "The generated image with ID ""%1"" does not exist.","The generated image with ID ""%1"" does not exist."
 "The image %1 does not belong to the product ""%2"".","The image %1 does not belong to the product ""%2""."
+"The image is %1x%2 pixels; each side must be between 1 and %3 pixels.","The image is %1x%2 pixels; each side must be between 1 and %3 pixels."
 "The image is not a JPEG, PNG or WebP file.","The image is not a JPEG, PNG or WebP file."
 "The image provider ""%1"" is not configured.","The image provider ""%1"" is not configured."
 "The image provider ""%1"" is not installed.","The image provider ""%1"" is not installed."
@@ -106,4 +107,5 @@
 "Unknown image role(s): %1.","Unknown image role(s): %1."
 "Unknown image role(s): %1. Allowed: %2.","Unknown image role(s): %1. Allowed: %2."
 "Unsupported image type ""%1"".","Unsupported image type ""%1""."
+"You are not allowed to manage products.","You are not allowed to manage products."
 "no reason given","no reason given"

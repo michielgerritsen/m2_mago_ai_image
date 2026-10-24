@@ -89,6 +89,7 @@
 "The generated image file is missing.","Falta el archivo de la imagen generada."
 "The generated image with ID ""%1"" does not exist.","La imagen generada con ID ""%1"" no existe."
 "The image %1 does not belong to the product ""%2"".","La imagen %1 no pertenece al producto ""%2""."
+"The image is %1x%2 pixels; each side must be between 1 and %3 pixels.","La imagen mide %1x%2 píxeles; cada lado debe tener entre 1 y %3 píxeles."
 "The image is not a JPEG, PNG or WebP file.","La imagen no es un archivo JPEG, PNG o WebP."
 "The image provider ""%1"" is not configured.","El proveedor de imágenes ""%1"" no está configurado."
 "The image provider ""%1"" is not installed.","El proveedor de imágenes ""%1"" no está instalado."
@@ -106,4 +107,5 @@
 "Unknown image role(s): %1.","Rol(es) de imagen desconocido(s): %1."
 "Unknown image role(s): %1. Allowed: %2.","Rol(es) de imagen desconocido(s): %1. Permitidos: %2."
 "Unsupported image type ""%1"".","Tipo de imagen no admitido ""%1""."
+"You are not allowed to manage products.","No tienes permiso para gestionar productos."
 "no reason given","sin motivo indicado"

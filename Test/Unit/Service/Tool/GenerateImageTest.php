@@ -6,6 +6,7 @@ namespace Orangecat\MagoAiImage\Test\Unit\Service\Tool;
 
 use Magento\Authorization\Model\UserContextInterface;
 use Magento\Catalog\Api\Data\ProductInterface;
+use Magento\Framework\AuthorizationInterface;
 use Magento\Framework\Exception\LocalizedException;
 use Orangecat\MagoAiImage\Api\Data\GenerationInterface;
 use Orangecat\MagoAiImage\Api\ImageGeneratorInterface;
@@ -15,6 +16,7 @@ use Orangecat\MagoAiImage\Exception\ProviderUnavailableException;
 use Orangecat\MagoAiImage\Model\Config;
 use Orangecat\MagoAiImage\Model\Data\ProviderCapabilities;
 use Orangecat\MagoAiImage\Model\Availability;
+use Orangecat\MagoAiImage\Model\ProductAccess;
 use Orangecat\MagoAiImage\Model\ProductImageReader;
 use Orangecat\MagoAiImage\Service\Tool\GenerateImage;
 use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
@@ -54,6 +56,13 @@ class GenerateImageTest extends TestCase
      */
     private GenerateImage $tool;
 
+    /**
+     * Whether the admin may manage products.
+     *
+     * @var bool
+     */
+    private bool $canManageProducts = true;
+
     protected function setUp(): void
     {
         $this->imageGenerator = $this->createMock(ImageGeneratorInterface::class);
@@ -70,7 +79,23 @@ class GenerateImageTest extends TestCase
             $this->providerPool,
             $config,
             $this->availability,
-            $this->userContext
+            $this->userContext,
+            new ProductAccess($this->authorization())
+        );
+    }
+
+    public function testRefusesAdminWhoCannotManageProducts(): void
+    {
+        $this->canManageProducts = false;
+        $this->imageGenerator->expects($this->never())->method('generateForProduct');
+
+        $this->assertSame(
+            ['error' => 'You are not allowed to manage products.'],
+            $this->tool->findRefusal(['sku' => 'WJ12', 'prompt' => 'p'])
+        );
+        $this->assertSame(
+            ['error' => 'You are not allowed to manage products.'],
+            $this->tool->execute(['sku' => 'WJ12', 'prompt' => 'p'])
         );
     }
 
@@ -182,5 +207,20 @@ class GenerateImageTest extends TestCase
 
         $this->assertArrayNotHasKey('enum', $schema['properties']['aspect_ratio']);
         $this->assertSame(1, $schema['properties']['count']['maximum']);
+    }
+
+    /**
+     * Authorization that follows $canManageProducts.
+     *
+     * @return AuthorizationInterface
+     */
+    private function authorization(): AuthorizationInterface
+    {
+        $authorization = $this->createStub(AuthorizationInterface::class);
+        $authorization->method('isAllowed')->willReturnCallback(
+            fn (string $resource): bool => $resource !== ProductAccess::ACL_PRODUCTS || $this->canManageProducts
+        );
+
+        return $authorization;
     }
 }

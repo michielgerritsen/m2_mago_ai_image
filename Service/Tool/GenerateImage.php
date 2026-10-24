@@ -11,6 +11,7 @@ use Orangecat\MagoAiImage\Api\ImageGeneratorInterface;
 use Orangecat\MagoAiImage\Api\ProviderPoolInterface;
 use Orangecat\MagoAiImage\Model\Config;
 use Orangecat\MagoAiImage\Model\Availability;
+use Orangecat\MagoAiImage\Model\ProductAccess;
 use Orangecat\MagoAiImage\Model\ProductImageReader;
 use MagoAssistant\Mago\Api\Tool\AvailabilityAwareToolInterface;
 use MagoAssistant\Mago\Api\Tool\PresentableToolInterface;
@@ -40,6 +41,7 @@ class GenerateImage implements
      * @param Config $config
      * @param Availability $availability
      * @param UserContextInterface $userContext
+     * @param ProductAccess $productAccess
      */
     public function __construct(
         private readonly ImageGeneratorInterface $imageGenerator,
@@ -47,7 +49,8 @@ class GenerateImage implements
         private readonly ProviderPoolInterface $providerPool,
         private readonly Config $config,
         private readonly Availability $availability,
-        private readonly UserContextInterface $userContext
+        private readonly UserContextInterface $userContext,
+        private readonly ProductAccess $productAccess
     ) {
     }
 
@@ -194,7 +197,7 @@ class GenerateImage implements
      */
     public function findRefusal(array $input): ?array
     {
-        $reason = $this->availability->getUnavailableReason();
+        $reason = $this->productAccess->getDeniedReason() ?? $this->availability->getUnavailableReason();
         if ($reason !== null) {
             return ['error' => $reason];
         }
@@ -250,6 +253,10 @@ class GenerateImage implements
      */
     public function execute(array $params): array
     {
+        $denied = $this->productAccess->getDeniedReason();
+        if ($denied !== null) {
+            return ['error' => $denied];
+        }
         $sku = trim((string) ($params['sku'] ?? ''));
         $options = [];
         if (isset($params['media_entry_id'])) {
