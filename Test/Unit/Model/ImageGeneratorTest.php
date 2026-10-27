@@ -232,6 +232,25 @@ class ImageGeneratorTest extends TestCase
         $this->assertSame('revised', $first->getRevisedPrompt());
     }
 
+    public function testItKeepsStoredPreviewsWhenOneImageIsBroken(): void
+    {
+        $this->provider->method('generate')->willReturn(new ImageResult(
+            [new ImageBinary('garbage', 'image/png'), new ImageBinary(ImageInspectorTest::png(4, 4), 'image/png')],
+            'm'
+        ));
+        $this->previewStorage->method('save')->willReturn('p/1.png');
+        $this->generationRepository->method('save')->willReturnArgument(0);
+
+        $generations = $this->generator->generateForProduct(
+            'MB01',
+            'prompt',
+            [ImageGeneratorInterface::OPTION_COUNT => 2]
+        );
+
+        $this->assertCount(1, $generations);
+        $this->assertSame('p/1.png', $generations[0]->getFile());
+    }
+
     public function testProviderReturningGarbageStoresNothing(): void
     {
         $this->provider->method('generate')->willReturn(
