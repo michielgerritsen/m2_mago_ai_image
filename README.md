@@ -34,8 +34,12 @@ bin/magento setup:upgrade
 1. Add the API key once, in Mage-OS AI Base: `Stores > Configuration > Mage-OS > AI Configuration`,
    add a **Google Gemini** or **OpenAI** service with its API key and save. The key never goes into
    this module's settings.
+
+   ![An OpenAI service in Mage-OS AI Configuration](docs/images/ai-configuration-service.png)
 2. Open `Stores > Configuration > Mago Assistant > Image Generation`, set **Enabled** to Yes, pick
    that service under **AI Service** and save.
+
+   ![The Image Generation settings](docs/images/config-image-generation.png)
 3. Make sure the admin role has `Catalog > Inventory > Products > Image Generation` (with
    *Generate Previews* and *Add to Product Gallery*) and access to products, and that the image
    tools are allowed for the user under `Stores > Admin Assistant > Skills & Permissions`.
@@ -44,6 +48,8 @@ bin/magento setup:upgrade
    the provider. The previews appear in the chat.
 5. Ask *Add the first one as the base image*. After confirming, the image is in the product's
    gallery under `Catalog > Products > WJ12 > Images and Videos`.
+
+   ![A generated image next to the original in the product gallery](docs/images/product-gallery.png)
 
 `bin/magento mago:ai-image:providers` shows the selected service, which provider serves it and
 whether generation can run.
