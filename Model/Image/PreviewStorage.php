@@ -24,6 +24,11 @@ class PreviewStorage
     public const BASE_PATH = 'mago_ai_image/preview';
 
     /**
+     * Glob of the files save() writes below BASE_PATH: two single-character folders, then the file.
+     */
+    private const PREVIEW_FILES = '*/*/*';
+
+    /**
      * @var WriteInterface|null
      */
     private ?WriteInterface $mediaDirectory = null;
@@ -123,14 +128,14 @@ class PreviewStorage
      */
     public function getFilesModifiedBefore(int $timestamp): array
     {
-        $directory = $this->getMediaDirectory();
+        $directory = $this->filesystem->getDirectoryRead(DirectoryList::MEDIA);
         try {
             if (!$directory->isDirectory(self::BASE_PATH)) {
                 return [];
             }
 
             return array_values(array_filter(
-                $directory->readRecursively(self::BASE_PATH),
+                $directory->search(self::PREVIEW_FILES, self::BASE_PATH),
                 static fn (string $path): bool => $directory->isFile($path)
                     && (int) ($directory->stat($path)['mtime'] ?? $timestamp) < $timestamp
             ));

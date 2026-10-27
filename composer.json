@@ -11,6 +11,14 @@
         "mago-assistant/magento2-mago": "^1.1",
         "symfony/ai-gemini-platform": "^0.15"
     },
+    "require-dev": {
+        "bitexpert/phpstan-magento": "^0.44",
+        "magento/magento-coding-standard": "^41",
+        "phpstan/extension-installer": "^1.4",
+        "phpstan/phpstan": "^2.3",
+        "phpstan/phpstan-phpunit": "^2.1",
+        "phpunit/phpunit": "^10.5 || ^11.5 || ^12.5"
+    },
     "autoload": {
         "files": [
             "registration.php"
@@ -28,7 +36,9 @@
     "config": {
         "allow-plugins": {
             "magento/composer-dependency-version-audit-plugin": false,
-            "magento/magento-composer-installer": false
+            "magento/magento-composer-installer": false,
+            "phpstan/extension-installer": true,
+            "dealerdirect/phpcodesniffer-composer-installer": true
         }
     }
 }

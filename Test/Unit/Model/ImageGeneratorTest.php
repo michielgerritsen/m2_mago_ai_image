@@ -33,6 +33,7 @@ use Orangecat\MagoAiImage\Model\ImageGenerator;
 use Orangecat\MagoAiImage\Test\Unit\Model\Image\ImageInspectorTest;
 use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
@@ -55,7 +56,7 @@ class ImageGeneratorTest extends TestCase
     private $provider;
 
     /**
-     * @var ProductInterface|MockObject
+     * @var ProductInterface&Stub
      */
     private $product;
 
@@ -137,6 +138,7 @@ class ImageGeneratorTest extends TestCase
         $generationFactory = $this->createStub(GenerationFactory::class);
         $generationFactory->method('create')->willReturnCallback(
             static fn (): Generation => $objectManager->getObject(Generation::class)
+                ?? throw new \LogicException('Could not create a generation.')
         );
         $this->generationRepository = $this->createMock(GenerationRepositoryInterface::class);
 
