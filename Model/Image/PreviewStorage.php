@@ -115,6 +115,31 @@ class PreviewStorage
     }
 
     /**
+     * Preview files last modified before a moment, as paths relative to pub/media.
+     *
+     * @param int $timestamp Unix time
+     * @return string[]
+     * @throws LocalizedException
+     */
+    public function getFilesModifiedBefore(int $timestamp): array
+    {
+        $directory = $this->getMediaDirectory();
+        try {
+            if (!$directory->isDirectory(self::BASE_PATH)) {
+                return [];
+            }
+
+            return array_values(array_filter(
+                $directory->readRecursively(self::BASE_PATH),
+                static fn (string $path): bool => $directory->isFile($path)
+                    && (int) ($directory->stat($path)['mtime'] ?? $timestamp) < $timestamp
+            ));
+        } catch (FileSystemException $e) {
+            throw new LocalizedException(__('Could not read the generated image folder.'), $e);
+        }
+    }
+
+    /**
      * Public URL of a stored preview.
      *
      * @param string $path

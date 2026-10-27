@@ -12,6 +12,7 @@ use Orangecat\MagoAiImage\Api\GenerationRepositoryInterface;
 use Orangecat\MagoAiImage\Cron\CleanupPreviews;
 use Orangecat\MagoAiImage\Model\Config;
 use Orangecat\MagoAiImage\Model\Generation;
+use Orangecat\MagoAiImage\Model\Image\OrphanedPreviews;
 use Orangecat\MagoAiImage\Model\Image\PreviewStorage;
 use Orangecat\MagoAiImage\Model\ResourceModel\Generation\Collection;
 use Orangecat\MagoAiImage\Model\ResourceModel\Generation\CollectionFactory;
@@ -56,7 +57,8 @@ class CleanupPreviewsTest extends TestCase
             $repository,
             $previewStorage,
             $dateTime,
-            $this->createStub(LoggerInterface::class)
+            $this->createStub(LoggerInterface::class),
+            $this->createStub(OrphanedPreviews::class)
         );
 
         $this->assertSame(2, $cron->execute());
@@ -101,7 +103,8 @@ class CleanupPreviewsTest extends TestCase
             $this->createStub(GenerationRepositoryInterface::class),
             $this->createStub(PreviewStorage::class),
             $dateTime,
-            $this->createStub(LoggerInterface::class)
+            $this->createStub(LoggerInterface::class),
+            $this->createStub(OrphanedPreviews::class)
         );
 
         $handled = $cron->execute();

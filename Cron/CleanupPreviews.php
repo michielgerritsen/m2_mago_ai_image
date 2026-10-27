@@ -10,6 +10,7 @@ use Orangecat\MagoAiImage\Api\Data\GenerationInterface;
 use Orangecat\MagoAiImage\Api\GenerationManagementInterface;
 use Orangecat\MagoAiImage\Api\GenerationRepositoryInterface;
 use Orangecat\MagoAiImage\Model\Config;
+use Orangecat\MagoAiImage\Model\Image\OrphanedPreviews;
 use Orangecat\MagoAiImage\Model\Image\PreviewStorage;
 use Orangecat\MagoAiImage\Model\ResourceModel\Generation\Collection;
 use Orangecat\MagoAiImage\Model\ResourceModel\Generation\CollectionFactory;
@@ -19,7 +20,8 @@ use Psr\Log\LoggerInterface;
  * Removes preview files older than the retention period.
  *
  * Previews nobody attached are discarded. Attached ones only lose the preview file (the product
- * gallery has its own copy); until then the Mago chat history keeps showing them.
+ * gallery has its own copy); until then the Mago chat history keeps showing them. Files no row
+ * points to any more, such as those of a deleted product, are removed as well.
  */
 class CleanupPreviews
 {
@@ -33,6 +35,7 @@ class CleanupPreviews
      * @param PreviewStorage $previewStorage
      * @param DateTime $dateTime
      * @param LoggerInterface $logger
+     * @param OrphanedPreviews $orphanedPreviews
      */
     public function __construct(
         private readonly Config $config,
@@ -41,7 +44,8 @@ class CleanupPreviews
         private readonly GenerationRepositoryInterface $generationRepository,
         private readonly PreviewStorage $previewStorage,
         private readonly DateTime $dateTime,
-        private readonly LoggerInterface $logger
+        private readonly LoggerInterface $logger,
+        private readonly OrphanedPreviews $orphanedPreviews
     ) {
     }
 
@@ -52,12 +56,29 @@ class CleanupPreviews
      */
     public function execute(): int
     {
-        $threshold = $this->dateTime->gmtDate(
-            'Y-m-d H:i:s',
-            $this->dateTime->gmtTimestamp() - $this->config->getPreviewRetentionDays() * 86400
-        );
+        $cutoff = $this->dateTime->gmtTimestamp() - $this->config->getPreviewRetentionDays() * 86400;
+        $threshold = (string) $this->dateTime->gmtDate('Y-m-d H:i:s', $cutoff);
 
-        return $this->discardUnattached($threshold) + $this->clearAttached($threshold);
+        return $this->discardUnattached($threshold) + $this->clearAttached($threshold) + $this->removeOrphans($cutoff);
+    }
+
+    /**
+     * Delete preview files no generation row points to any more.
+     *
+     * @param int $cutoff Unix time
+     * @return int
+     */
+    private function removeOrphans(int $cutoff): int
+    {
+        try {
+            return $this->orphanedPreviews->removeModifiedBefore($cutoff);
+        } catch (LocalizedException $e) {
+            $this->logger->warning('Orangecat_MagoAiImage: could not remove orphaned previews', [
+                'error' => $e->getMessage(),
+            ]);
+
+            return 0;
+        }
     }
 
     /**
