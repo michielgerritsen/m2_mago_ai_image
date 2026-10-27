@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Orangecat\MagoAiImage\Test\Unit\Cron;
 
+use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Stdlib\DateTime\DateTime;
 use Orangecat\MagoAiImage\Api\Data\GenerationInterface;
 use Orangecat\MagoAiImage\Api\GenerationManagementInterface;
@@ -64,6 +65,53 @@ class CleanupPreviewsTest extends TestCase
         $this->assertContains(['created_at', ['lt' => '2001-09-02 01:46:40']], $filters);
     }
 
+    public function testItWorksThroughMoreThanOneBatchAndSkipsRowsThatFail(): void
+    {
+        $config = $this->createStub(Config::class);
+        $config->method('getPreviewRetentionDays')->willReturn(7);
+        $previews = array_map(
+            fn (int $id): Generation => $this->generation($id, GenerationInterface::STATUS_PREVIEW, 'p.png'),
+            range(1, 201)
+        );
+        $filters = [];
+        $factory = $this->createStub(CollectionFactory::class);
+        $factory->method('create')->willReturnOnConsecutiveCalls(
+            $this->collection(array_slice($previews, 0, 200), $filters),
+            $this->collection(array_slice($previews, 200), $filters),
+            $this->collection([], $filters)
+        );
+        $discarded = [];
+        $management = $this->createStub(GenerationManagementInterface::class);
+        $management->method('discard')->willReturnCallback(
+            function (int $id) use (&$discarded, $previews): Generation {
+                if ($id === 3) {
+                    throw new LocalizedException(__('File is locked'));
+                }
+                $discarded[] = $id;
+
+                return $previews[$id - 1];
+            }
+        );
+        $dateTime = $this->createStub(DateTime::class);
+        $dateTime->method('gmtDate')->willReturn('2001-09-02 01:46:40');
+        $cron = new CleanupPreviews(
+            $config,
+            $factory,
+            $management,
+            $this->createStub(GenerationRepositoryInterface::class),
+            $this->createStub(PreviewStorage::class),
+            $dateTime,
+            $this->createStub(LoggerInterface::class)
+        );
+
+        $handled = $cron->execute();
+
+        $this->assertSame(200, $handled);
+        $this->assertContains(201, $discarded);
+        $this->assertNotContains(3, $discarded);
+        $this->assertContains(['generation_id', ['gt' => 200]], $filters);
+    }
+
     /**
      * @param int $id
      * @param string $status
@@ -99,6 +147,7 @@ class CleanupPreviewsTest extends TestCase
             }
         );
         $collection->method('setPageSize')->willReturnSelf();
+        $collection->method('setOrder')->willReturnSelf();
         $collection->method('getIterator')->willReturn(new \ArrayIterator($items));
 
         return $collection;

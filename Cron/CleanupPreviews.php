@@ -11,6 +11,7 @@ use Orangecat\MagoAiImage\Api\GenerationManagementInterface;
 use Orangecat\MagoAiImage\Api\GenerationRepositoryInterface;
 use Orangecat\MagoAiImage\Model\Config;
 use Orangecat\MagoAiImage\Model\Image\PreviewStorage;
+use Orangecat\MagoAiImage\Model\ResourceModel\Generation\Collection;
 use Orangecat\MagoAiImage\Model\ResourceModel\Generation\CollectionFactory;
 use Psr\Log\LoggerInterface;
 
@@ -67,25 +68,15 @@ class CleanupPreviews
      */
     private function discardUnattached(string $threshold): int
     {
-        $collection = $this->collectionFactory->create();
-        $collection->addFieldToFilter(GenerationInterface::STATUS, GenerationInterface::STATUS_PREVIEW)
-            ->addFieldToFilter(GenerationInterface::CREATED_AT, ['lt' => $threshold])
-            ->setPageSize(self::BATCH_SIZE);
-
-        $discarded = 0;
-        foreach ($collection as $generation) {
-            try {
+        return $this->processInBatches(
+            static fn (Collection $collection): Collection => $collection
+                ->addFieldToFilter(GenerationInterface::STATUS, GenerationInterface::STATUS_PREVIEW)
+                ->addFieldToFilter(GenerationInterface::CREATED_AT, ['lt' => $threshold]),
+            function (GenerationInterface $generation): void {
                 $this->generationManagement->discard((int) $generation->getGenerationId());
-                $discarded++;
-            } catch (LocalizedException $e) {
-                $this->logger->warning('Orangecat_MagoAiImage: could not discard preview', [
-                    'generation_id' => $generation->getGenerationId(),
-                    'error' => $e->getMessage(),
-                ]);
-            }
-        }
-
-        return $discarded;
+            },
+            'Orangecat_MagoAiImage: could not discard preview'
+        );
     }
 
     /**
@@ -96,27 +87,72 @@ class CleanupPreviews
      */
     private function clearAttached(string $threshold): int
     {
-        $collection = $this->collectionFactory->create();
-        $collection->addFieldToFilter(GenerationInterface::STATUS, GenerationInterface::STATUS_ATTACHED)
-            ->addFieldToFilter(GenerationInterface::FILE, ['neq' => ''])
-            ->addFieldToFilter(GenerationInterface::CREATED_AT, ['lt' => $threshold])
-            ->setPageSize(self::BATCH_SIZE);
-
-        $cleared = 0;
-        foreach ($collection as $generation) {
-            /** @var GenerationInterface $generation */
-            try {
+        return $this->processInBatches(
+            static fn (Collection $collection): Collection => $collection
+                ->addFieldToFilter(GenerationInterface::STATUS, GenerationInterface::STATUS_ATTACHED)
+                ->addFieldToFilter(GenerationInterface::FILE, ['neq' => ''])
+                ->addFieldToFilter(GenerationInterface::CREATED_AT, ['lt' => $threshold]),
+            function (GenerationInterface $generation): void {
                 $this->previewStorage->delete($generation->getFile());
                 $this->generationRepository->save($generation->setFile(''));
-                $cleared++;
-            } catch (LocalizedException $e) {
-                $this->logger->warning('Orangecat_MagoAiImage: could not remove attached preview', [
-                    'generation_id' => $generation->getGenerationId(),
-                    'error' => $e->getMessage(),
-                ]);
-            }
-        }
+            },
+            'Orangecat_MagoAiImage: could not remove attached preview'
+        );
+    }
 
-        return $cleared;
+    /**
+     * Handle every matching generation, a batch at a time, in id order.
+     *
+     * The cursor moves past each row whether it succeeded or not, so a backlog is worked off in
+     * one run and a row that keeps failing is logged and skipped instead of filling every batch.
+     *
+     * @param callable $applyFilters Adds the filters of one cleanup step to a fresh collection
+     * @param callable $process Cleans up one generation; throws LocalizedException on failure
+     * @param string $failureMessage
+     * @return int Number of generations handled without error
+     */
+    private function processInBatches(callable $applyFilters, callable $process, string $failureMessage): int
+    {
+        $handled = 0;
+        $lastId = 0;
+        do {
+            $batch = $applyFilters($this->collectionFactory->create())
+                ->addFieldToFilter(GenerationInterface::GENERATION_ID, ['gt' => $lastId])
+                ->setOrder(GenerationInterface::GENERATION_ID, Collection::SORT_ORDER_ASC)
+                ->setPageSize(self::BATCH_SIZE);
+            $batchSize = 0;
+            foreach ($batch as $generation) {
+                /** @var GenerationInterface $generation */
+                $batchSize++;
+                $lastId = (int) $generation->getGenerationId();
+                $handled += $this->tryProcess($generation, $process, $failureMessage) ? 1 : 0;
+            }
+        } while ($batchSize === self::BATCH_SIZE);
+
+        return $handled;
+    }
+
+    /**
+     * Run one cleanup step, logging a failure instead of stopping the run.
+     *
+     * @param GenerationInterface $generation
+     * @param callable $process
+     * @param string $failureMessage
+     * @return bool
+     */
+    private function tryProcess(GenerationInterface $generation, callable $process, string $failureMessage): bool
+    {
+        try {
+            $process($generation);
+
+            return true;
+        } catch (LocalizedException $e) {
+            $this->logger->warning($failureMessage, [
+                'generation_id' => $generation->getGenerationId(),
+                'error' => $e->getMessage(),
+            ]);
+
+            return false;
+        }
     }
 }
