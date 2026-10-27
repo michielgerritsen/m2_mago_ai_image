@@ -151,6 +151,14 @@ class GeminiTest extends TestCase
         $this->assertStringStartsWith('https://proxy.example.com/v1beta/models/', $this->requests[0]['url']);
     }
 
+    public function testItRefusesABaseUrlThatIsNotHttp(): void
+    {
+        $this->values['base_url'] = 'file:///etc/passwd';
+
+        $this->expectException(ProviderUnavailableException::class);
+        $this->gemini->generate(new ImageRequest('prompt'));
+    }
+
     public function testOmitsImageConfigWhenNothingRequested(): void
     {
         $this->gemini->generate(new ImageRequest('prompt'));

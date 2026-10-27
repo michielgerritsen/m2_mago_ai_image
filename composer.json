@@ -3,6 +3,11 @@
     "description": "Mago Assistant add-on: AI product images from a gallery image and a prompt, with pluggable providers (Google Gemini, OpenAI).",
     "type": "magento2-module",
     "license": "MIT",
+    "support": {
+        "issues": "https://github.com/olivertar/m2_mago_ai_image/issues",
+        "security": "https://github.com/olivertar/m2_mago_ai_image/security/advisories/new",
+        "source": "https://github.com/olivertar/m2_mago_ai_image"
+    },
     "require": {
         "php": "~8.2.0||~8.3.0||~8.4.0||~8.5.0",
         "ext-gd": "*",
