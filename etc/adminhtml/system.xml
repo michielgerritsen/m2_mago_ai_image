@@ -8,7 +8,7 @@
             with the id of its provider code (model and provider-specific options, never a key).
         -->
         <section id="mago_ai_image" translate="label" type="text" sortOrder="20" showInDefault="1" showInWebsite="1">
-            <label>AI Product Images</label>
+            <label>Image Generation</label>
             <tab>mago_assistant</tab>
             <resource>Orangecat_MagoAiImage::config</resource>
             <group id="general" translate="label comment" type="text" sortOrder="10" showInDefault="1" showInWebsite="1">

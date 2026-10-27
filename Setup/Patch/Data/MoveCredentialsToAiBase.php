@@ -36,8 +36,8 @@ class MoveCredentialsToAiBase implements DataPatchInterface
      * Old provider code => MageOS_AiBase service code and the label of an imported row.
      */
     private const PROVIDERS = [
-        'gemini' => ['code' => 'google', 'label' => 'Google Gemini (AI Product Images)'],
-        'openai' => ['code' => 'openai', 'label' => 'OpenAI (AI Product Images)'],
+        'gemini' => ['code' => 'google', 'label' => 'Google Gemini (Image Generation)'],
+        'openai' => ['code' => 'openai', 'label' => 'OpenAI (Image Generation)'],
     ];
 
     /**

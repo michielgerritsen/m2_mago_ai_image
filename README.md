@@ -23,7 +23,7 @@ API keys live only in MageOS_AiBase. Add a Google Gemini or OpenAI service under
 
 ## Configuration
 
-`Stores > Configuration > Mago Assistant > AI Product Images` (`mago_ai_image/*`).
+`Stores > Configuration > Mago Assistant > Image Generation` (`mago_ai_image/*`).
 
 General (`mago_ai_image/general/*`):
 
