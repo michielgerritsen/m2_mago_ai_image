@@ -18,5 +18,17 @@
         "psr-4": {
             "Orangecat\\MagoAiImage\\": ""
         }
+    },
+    "repositories": [
+        {
+            "type": "composer",
+            "url": "https://mirror.mage-os.org/"
+        }
+    ],
+    "config": {
+        "allow-plugins": {
+            "magento/composer-dependency-version-audit-plugin": false,
+            "magento/magento-composer-installer": false
+        }
     }
 }
